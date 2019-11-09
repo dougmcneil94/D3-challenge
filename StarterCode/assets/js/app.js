@@ -1,47 +1,87 @@
-// @TODO: YOUR CODE HERE!
-var svgWidth = 1000;
+// // @TODO: YOUR CODE HERE!
+var svgWidth = 960;
 var svgHeight = 500;
 
-// create an SVG element
-var svg = d3.select("#svg-area")
+var margin = {
+  top: 20,
+  right: 40,
+  bottom: 60,
+  left: 100
+};
+
+var width = svgWidth - margin.left - margin.right;
+var height = svgHeight - margin.top - margin.bottom;
+
+// Create an SVG wrapper, append an SVG group that will hold our chart, and shift the latter by left and top margins.
+var svg = d3.select("body")
   .append("svg")
   .attr("width", svgWidth)
   .attr("height", svgHeight);
 
-// Load csv data
-d3.csv("data.csv").then(function(povertyData) {
+var chartGroup = svg.append("g")
+  .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-  console.log(povertyData);
+// Import Data
+d3.csv("assets/data/data.csv").then(function (povertyData) {
 
-  // cast the data from the csv as numbers
-  povertyData.forEach(function(data) {
+  // Step 1: Parse Data/Cast as numbers
+  // ==============================
+  povertyData.forEach(function (data) {
     data.poverty = +data.poverty;
     data.obesity = +data.obesity;
   });
 
-  // Create a scale for your independent (x) coordinates
-  var xScale = d3.scaleLinear()
+  // Step 2: Create scale functions
+  // ==============================
+  var xLinearScale = d3.scaleLinear()
     .domain(d3.extent(povertyData, d => d.poverty))
-    .range([0, svgWidth]);
+    .range([0, width]);
 
-  // Create a scale for your dependent (y) coordinates
-  var yScale = d3.scaleLinear()
+  var yLinearScale = d3.scaleLinear()
     .domain([0, d3.max(povertyData, d => d.obesity)])
-    .range([svgHeight, 0]);
+    .range([height, 0]);
 
-  // create a line generator function and store as a variable
-  // use the scale functions for x and y data
-  var createLine = d3.line()
-    .x(data => xScale(data.poverty))
-    .y(data => yScale(data.obesity));
+  // Step 3: Create axis functions
+  // ==============================
+  var bottomAxis = d3.axisBottom(xLinearScale);
+  var leftAxis = d3.axisLeft(yLinearScale);
 
-  // Append a path element to the svg, make sure to set the stroke, stroke-width, and fill attributes.
-  svg.append("path")
-    .attr("stroke", "black")
-    .attr("stroke-width", "1")
-    .attr("fill", "none")
-    .attr("d", createLine(povertyData));
+  // Step 4: Append Axes to the chart
+  // ==============================
+  chartGroup.append("g")
+    .attr("transform", `translate(0, ${height})`)
+    .call(bottomAxis);
 
-}).catch(function(error) {
+  chartGroup.append("g")
+    .call(leftAxis);
+
+  // Step 5: Create Circles
+  // ==============================
+  var circlesGroup = chartGroup.selectAll("circle")
+    .data(povertyData)
+    .enter()
+    .append("circle")
+    .attr("cx", d => xLinearScale(d.poverty))
+    .attr("cy", d => yLinearScale(d.obesity))
+    .attr("r", "15")
+    .attr("fill", "pink")
+    .attr("opacity", ".5");
+
+  chartGroup.append("text")
+    .attr("transform", "rotate(-90)")
+    .attr("y", 0 - margin.left + 40)
+    .attr("x", 0 - (height / 2))
+    .attr("dy", "1em")
+    .attr("class", "axisText")
+    .text("Poverty %");
+
+  chartGroup.append("text")
+    .attr("transform", `translate(${width / 2}, ${height + margin.top + 30})`)
+    .attr("class", "axisText")
+    .text("Obesity rate");
+}).catch(function (error) {
   console.log(error);
 });
+
+
+
