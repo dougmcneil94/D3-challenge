@@ -68,6 +68,23 @@ d3.csv("assets/data/data.csv").then(function (povertyData) {
     .attr("opacity", ".5");
 
   chartGroup.append("text")
+    .style("font-size", "12px")
+    .selectAll("circle")
+    .data(povertyData)
+    .enter()
+    .append("tspan")
+    .attr("x", function (data) {
+      return xLinearScale(data.poverty);
+    })
+    .attr("y", function (data) {
+      return yLinearScale(data.obesity);
+    })
+    .text(function (data) {
+      return data.abbr
+    });
+
+
+  chartGroup.append("text")
     .attr("transform", "rotate(-90)")
     .attr("y", 0 - margin.left + 40)
     .attr("x", 0 - (height / 2))
